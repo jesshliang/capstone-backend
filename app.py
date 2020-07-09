@@ -1,7 +1,8 @@
 from flask import Flask, render_template
 from flask import jsonify
 import json
-from bson import json_util
+from bson import json_util, ObjectId
+from bson.json_util import loads, dumps
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 
@@ -30,21 +31,21 @@ def create_app(test_config=None):
         pass
 
     client = MongoClient('mongodb://127.0.0.1:27017')
-    db = client.test
-    collection = db.testTwo
+    db = client.capstone
+    users = db.users
 
-    @app.route('/')
+    @app.route('/', methods=['GET'])
     def index():
-        items = list(db.collection.find())
-        return json.dumps(items, default=json_util.default)
+        all_users = users.find()
+        return dumps(all_users)
 
-    @app.route('/users', methods=['GET'])
-    def get_all_users():
-        users = db.testTwo
-        output = []
-        for u in users.find():
-            output.append({'name': u['name']})
-        return jsonify(output)
+    # @app.route('/users', methods=['GET'])
+    # def get_all_users():
+    #     users = db.testTwo
+    #     output = []
+    #     for u in users.find():
+    #         output.append({'name': u['name']})
+    #     return jsonify(output)
 
     if __name__ == '__main__':
         app.run()
