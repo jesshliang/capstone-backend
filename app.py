@@ -1,3 +1,4 @@
+from flask_cors import CORS
 from flask import Flask, render_template
 from flask import jsonify, request
 import json
@@ -6,11 +7,14 @@ from bson.json_util import loads, dumps
 from flask_pymongo import PyMongo
 from pymongo import MongoClient
 
+
 import os
 
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
+    cors = CORS(app)
+    app.config['CORS_HEADERS'] = 'Content-Type'
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
@@ -41,12 +45,17 @@ def create_app(test_config=None):
 
     @app.route('/', methods=['POST'])
     def add_new_user():
-        user_id = users.insert({
-            "username" : request.args["username"],
-            "trips" : []
-        })
-        new_user = users.find_one( { "_id": user_id })
-        return dumps(new_user);
+        find_user = users.find_one({ 'username' : request.args["username"] })
+
+        if find_user:
+            return "already added"
+        else:
+            user_id = users.insert({
+                "username" : request.args["username"],
+                "trips" : []
+            })
+            new_user = users.find_one( { "_id": user_id })
+            return dumps(new_user);
 
     if __name__ == '__main__':
         app.run()
