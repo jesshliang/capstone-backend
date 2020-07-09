@@ -1,5 +1,5 @@
 from flask import Flask, render_template
-from flask import jsonify
+from flask import jsonify, request
 import json
 from bson import json_util, ObjectId
 from bson.json_util import loads, dumps
@@ -39,13 +39,14 @@ def create_app(test_config=None):
         all_users = users.find()
         return dumps(all_users)
 
-    # @app.route('/users', methods=['GET'])
-    # def get_all_users():
-    #     users = db.testTwo
-    #     output = []
-    #     for u in users.find():
-    #         output.append({'name': u['name']})
-    #     return jsonify(output)
+    @app.route('/', methods=['POST'])
+    def add_new_user():
+        user_id = users.insert({
+            "username" : request.args["username"],
+            "trips" : []
+        })
+        new_user = users.find_one( { "_id": user_id })
+        return dumps(new_user);
 
     if __name__ == '__main__':
         app.run()
