@@ -48,14 +48,14 @@ def create_app(test_config=None):
         find_user = users.find_one({ 'username' : request.args["username"] })
 
         if find_user:
-            return "already added"
+            return dumps(find_user)
         else:
             user_id = users.insert({
                 "username" : request.args["username"],
                 "trips" : []
             })
             new_user = users.find_one( { "_id": user_id })
-            return dumps(new_user);
+            return dumps(new_user)
 
     if __name__ == '__main__':
         app.run()
