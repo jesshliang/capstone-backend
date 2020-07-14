@@ -65,7 +65,13 @@ def create_app(test_config=None):
     @app.route('/trips', methods=['POST', 'GET'])
     @cross_origin()
     def add_new_trip():
-        print(request)
+        def convert(ele):
+            return json.loads(ele)
+
+        new_places = request.args.getlist('places[]')
+        result = map(convert, new_places)
+        result_list = list(result)
+
         new_trip_id = users.update_one(
             { 'username' : request.args["username"] },
             { '$push': {
@@ -73,16 +79,14 @@ def create_app(test_config=None):
                     {
                         'date': request.args["date"],
                         'title': request.args["title"],
-                        'places': [ json.loads(request.args['places[]']) ]
+                        'places': result_list
                     }
                 }
             }
         )
         
         find_user = users.find_one({ 'username' : request.args["username"] })
-        print(request.is_json)
         return dumps(find_user)
-        # return request.is_json
 
     if __name__ == '__main__':
         app.run()
