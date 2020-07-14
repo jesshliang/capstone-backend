@@ -1,4 +1,4 @@
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 from flask import Flask, render_template
 from flask import jsonify, request
 import json
@@ -43,6 +43,11 @@ def create_app(test_config=None):
         all_users = users.find()
         return dumps(all_users)
 
+    @app.route('/user', methods=['GET'])
+    def find_one_user():
+        find_user = users.find_one({ 'username' : request.args["username"] })
+        return dumps(find_user)
+
     @app.route('/', methods=['POST'])
     def add_new_user():
         find_user = users.find_one({ 'username' : request.args["username"] })
@@ -56,6 +61,28 @@ def create_app(test_config=None):
             })
             new_user = users.find_one( { "_id": user_id })
             return dumps(new_user)
+
+    @app.route('/trips', methods=['POST', 'GET'])
+    @cross_origin()
+    def add_new_trip():
+        print(request)
+        new_trip_id = users.update_one(
+            { 'username' : request.args["username"] },
+            { '$push': {
+                "trips" : 
+                    {
+                        'date': request.args["date"],
+                        'title': request.args["title"],
+                        'places': [ json.loads(request.args['places[]']) ]
+                    }
+                }
+            }
+        )
+        
+        find_user = users.find_one({ 'username' : request.args["username"] })
+        print(request.is_json)
+        return dumps(find_user)
+        # return request.is_json
 
     if __name__ == '__main__':
         app.run()
