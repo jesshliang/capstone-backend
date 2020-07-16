@@ -88,6 +88,26 @@ def create_app(test_config=None):
         find_user = users.find_one({ 'username' : request.args["username"] })
         return dumps(find_user)
 
+    @app.route('/trips', methods=["DELETE"])
+    def delete_trip():
+        incoming = json.loads(request.data)
+        print(incoming)
+
+        user_trips = users.find_one({ "username" : incoming["username"] })["trips"]
+        print(user_trips)
+        del user_trips[incoming["key"]]
+
+        users.update_one(
+            { 'username' : incoming["username"] },
+            { '$set' : { 
+                "trips" : user_trips 
+                }
+            }
+        )
+
+        find_user = users.find_one({ 'username' : incoming["username"] })
+        return dumps(find_user)
+
     if __name__ == '__main__':
         app.run()
 
