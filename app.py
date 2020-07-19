@@ -55,7 +55,7 @@ def find_one_user():
     find_user = users.find_one({ 'username' : request.args["username"] })
     return dumps(find_user)
 
-@app.route('/', methods=['POST'])
+@app.route('/users', methods=['POST'])
 def add_new_user():
     find_user = users.find_one({ 'username' : request.args["username"] })
 
