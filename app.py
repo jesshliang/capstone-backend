@@ -12,7 +12,8 @@ import os
 
 def create_app(test_config=None):
     # create and configure the app
-    app = Flask(__name__, instance_relative_config=True)
+    # app = Flask(__name__, instance_relative_config=True)
+    app = Flask(__name__, static_folder='./build', static_url_path='/')
     cors = CORS(app)
     app.config['CORS_HEADERS'] = 'Content-Type'
     app.config.from_mapping(
@@ -37,11 +38,14 @@ def create_app(test_config=None):
     client = MongoClient('mongodb://127.0.0.1:27017')
     db = client.capstone
     users = db.users
-
-    @app.route('/', methods=['GET'])
+    @app.route('/')
     def index():
-        all_users = users.find()
-        return dumps(all_users)
+        return app.send_static_file('index.html')
+
+    # @app.route('/', methods=['GET'])
+    # def index():
+    #     all_users = users.find()
+    #     return dumps(all_users)
 
     @app.route('/user', methods=['GET'])
     def find_one_user():
@@ -132,7 +136,7 @@ def create_app(test_config=None):
         find_user = users.find_one({ 'username' : request.args["username"] })
         return dumps(find_user)
 
-    if __name__ == '__main__':
-        app.run()
+    if __name__ == "__main__":
+        app.run(host='0.0.0.0', debug=False, port=os.environ.get('PORT', 80))
 
     return app
