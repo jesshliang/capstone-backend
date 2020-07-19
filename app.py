@@ -94,7 +94,6 @@ def create_app(test_config=None):
         print(incoming)
 
         user_trips = users.find_one({ "username" : incoming["username"] })["trips"]
-        print(user_trips)
         del user_trips[incoming["key"]]
 
         users.update_one(
@@ -106,6 +105,31 @@ def create_app(test_config=None):
         )
 
         find_user = users.find_one({ 'username' : incoming["username"] })
+        return dumps(find_user)
+
+    @app.route('/trips', methods=["PATCH"])
+    def edit_trip():
+        def convert(ele):
+            return json.loads(ele)
+
+        incoming_places = request.args.getlist('places[]')
+        result = map(convert, incoming_places)
+        updated_trip_places = list(result) # incoming list of places of specific trip 
+
+        user_trips = users.find_one({ "username" : request.args["username"] })["trips"] # current list of ALL trips
+        user_trips[int(request.args["index"])]["places"] = updated_trip_places # replace places of selected trip
+        user_trips[int(request.args["index"])]["title"] = request.args["title"]
+        user_trips[int(request.args["index"])]["date"] = request.args["date"]
+
+        users.update_one(
+            { 'username' : request.args["username"] },
+            { '$set' : { 
+                "trips" : user_trips 
+                }
+            }
+        )
+        
+        find_user = users.find_one({ 'username' : request.args["username"] })
         return dumps(find_user)
 
     if __name__ == '__main__':
