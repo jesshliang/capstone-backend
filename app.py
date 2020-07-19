@@ -1,3 +1,4 @@
+from pymongo import MongoClient
 from flask_cors import CORS, cross_origin
 from flask import Flask, render_template
 from flask import jsonify, request
@@ -5,7 +6,6 @@ import json
 from bson import json_util, ObjectId
 from bson.json_util import loads, dumps
 from flask_pymongo import PyMongo
-from pymongo import MongoClient
 
 
 import os
@@ -35,7 +35,7 @@ app.debug = True # so development server autoupdates with changes
 #     pass
 
 
-client = pymongo.MongoClient("mongodb+srv://jessicursliang:M4YMYcAPSTONEWORK@capstone.liwyt.mongodb.net/capstone?retryWrites=true&w=majority")
+client = MongoClient("mongodb+srv://jessicursliang:M4YMYcAPSTONEWORK@capstone.liwyt.mongodb.net/capstone?retryWrites=true&w=majority")
 # db = client.test
 
 # client = MongoClient('mongodb://127.0.0.1:27017')
