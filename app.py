@@ -11,7 +11,6 @@ from pymongo import MongoClient
 import os
 
 def create_app(test_config=None):
-    # create and configure the app
     # app = Flask(__name__, instance_relative_config=True)
     app = Flask(__name__, static_folder='./build', static_url_path='/')
     cors = CORS(app)
