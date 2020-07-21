@@ -6,12 +6,8 @@ import json
 from bson import json_util, ObjectId
 from bson.json_util import loads, dumps
 from flask_pymongo import PyMongo
-
-
 import os
 
-# def create_app(test_config=None):
-    # app = Flask(__name__, instance_relative_config=True)
 app = Flask(__name__, static_folder='./build', static_url_path='/')
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
@@ -21,34 +17,13 @@ app.config.from_mapping(
 )
 app.debug = True # so development server autoupdates with changes
 
-# if test_config is None:
-#     # load the instance config, if it exists, when not testing
-#     app.config.from_pyfile('config.py', silent=True)
-# else:
-#     # load the test config if passed in
-#     app.config.from_mapping(test_config)
-
-# # ensure the instance folder exists
-# try:
-#     os.makedirs(app.instance_path)
-# except OSError:
-#     pass
-
-
 client = MongoClient("mongodb+srv://jessicursliang:M4YMYcAPSTONEWORK@capstone.liwyt.mongodb.net/capstone?retryWrites=true&w=majority")
-# db = client.test
-
-# client = MongoClient('mongodb://127.0.0.1:27017')
 db = client.capstone
 users = db.users
+
 @app.route('/')
 def index():
     return app.send_static_file('index.html')
-
-# @app.route('/', methods=['GET'])
-# def index():
-#     all_users = users.find()
-#     return dumps(all_users)
 
 @app.route('/user', methods=['GET'])
 def find_one_user():
@@ -142,5 +117,3 @@ def edit_trip():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', debug=False, port=os.environ.get('PORT', 80))
-
-    # return app
