@@ -7,6 +7,8 @@ from bson import json_util, ObjectId
 from bson.json_util import loads, dumps
 from flask_pymongo import PyMongo
 import os
+import urllib
+import requests
 
 app = Flask(__name__, static_folder='./build', static_url_path='/')
 cors = CORS(app)
@@ -55,15 +57,31 @@ def add_new_trip():
     result = map(convert, new_places)
     result_list = list(result)
 
-    new_trip_id = users.update_one(
+    new_trip = {
+        'date': request.args["date"],
+        'title': request.args["title"]
+    }
+
+    new_trip_places = []
+    for place in result_list:
+        url = "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token=pk.eyJ1IjoiamVzc2ljYWxpYW5nIiwiYSI6ImNrY2I3N25wazFpOGEzMHF0dHY3aHNkOWUifQ.ItSK1BDpYydbUVyDPvdj6A".format(urllib.parse.quote_plus(place[0]))
+        response = requests.get(url)
+        json_response = response.json()
+
+        place_object = {
+            'location': json_response["features"][0]["place_name"],
+            'coordinates': json_response["features"][0]["center"],
+            'url': place[1]
+        }
+
+        new_trip_places.append(place_object)
+
+    new_trip['places'] = new_trip_places
+
+    users.update_one(
         { 'username' : request.args["username"] },
         { '$push': {
-            "trips" : 
-                {
-                    'date': request.args["date"],
-                    'title': request.args["title"],
-                    'places': result_list
-                }
+            "trips" : new_trip
             }
         }
     )
@@ -99,10 +117,33 @@ def edit_trip():
     result = map(convert, incoming_places)
     updated_trip_places = list(result) # incoming list of places of specific trip 
 
+    updated_trip = {
+        'date': request.args["date"],
+        'title': request.args["title"]
+    }
+
+    updated_places = []
+
+    for place in updated_trip_places:
+        if isinstance(place, list):
+            url = "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token=pk.eyJ1IjoiamVzc2ljYWxpYW5nIiwiYSI6ImNrY2I3N25wazFpOGEzMHF0dHY3aHNkOWUifQ.ItSK1BDpYydbUVyDPvdj6A".format(urllib.parse.quote_plus(place[0]))
+            response = requests.get(url)
+            json_response = response.json()
+
+            place_object = {
+                'location': json_response["features"][0]["place_name"],
+                'coordinates': json_response["features"][0]["center"],
+                'url': place[1]
+            }
+
+            updated_places.append(place_object)
+        else:
+            updated_places.append(place)
+
+    updated_trip['places'] = updated_places
+
     user_trips = users.find_one({ "username" : request.args["username"] })["trips"] # current list of ALL trips
-    user_trips[int(request.args["index"])]["places"] = updated_trip_places # replace places of selected trip
-    user_trips[int(request.args["index"])]["title"] = request.args["title"]
-    user_trips[int(request.args["index"])]["date"] = request.args["date"]
+    user_trips[int(request.args["index"])] = updated_trip
 
     users.update_one(
         { 'username' : request.args["username"] },
