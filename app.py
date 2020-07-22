@@ -66,13 +66,21 @@ def add_new_trip():
     for place in result_list:
         url = "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token=pk.eyJ1IjoiamVzc2ljYWxpYW5nIiwiYSI6ImNrY2I3N25wazFpOGEzMHF0dHY3aHNkOWUifQ.ItSK1BDpYydbUVyDPvdj6A".format(urllib.parse.quote_plus(place[0]))
         response = requests.get(url)
+
         json_response = response.json()
 
-        place_object = {
-            'location': json_response["features"][0]["place_name"],
-            'coordinates': json_response["features"][0]["center"],
-            'url': place[1]
-        }
+        if not json_response["features"]:
+            place_object = {
+                'location': 'ERROR: Location was invalid or not found.',
+                'coordinates': 'invalid',
+                'url': place[1]
+            }
+        else:
+            place_object = {
+                'location': json_response["features"][0]["place_name"],
+                'coordinates': json_response["features"][0]["center"],
+                'url': place[1]
+            }
 
         new_trip_places.append(place_object)
 
@@ -116,6 +124,7 @@ def edit_trip():
     incoming_places = request.args.getlist('places[]')
     result = map(convert, incoming_places)
     updated_trip_places = list(result) # incoming list of places of specific trip 
+    user_trips = users.find_one({ "username" : request.args["username"] })["trips"] # current list of ALL trips
 
     updated_trip = {
         'date': request.args["date"],
@@ -129,12 +138,44 @@ def edit_trip():
             url = "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token=pk.eyJ1IjoiamVzc2ljYWxpYW5nIiwiYSI6ImNrY2I3N25wazFpOGEzMHF0dHY3aHNkOWUifQ.ItSK1BDpYydbUVyDPvdj6A".format(urllib.parse.quote_plus(place[0]))
             response = requests.get(url)
             json_response = response.json()
+            print(json_response)
+            if (json_response["message"] == 'Not Found'):
+                place_object = {
+                    'location': 'ERROR: Location was invalid or not found.',
+                    'coordinates': 'invalid',
+                    'url': place[1]
+                }
+            elif not json_response["features"]:
+                place_object = {
+                    'location': 'ERROR: Location was invalid or not found.',
+                    'coordinates': 'invalid',
+                    'url': place[1]
+                }
+            else:
+                place_object = {
+                    'location': json_response["features"][0]["place_name"],
+                    'coordinates': json_response["features"][0]["center"],
+                    'url': place[1]
+                }
 
-            place_object = {
-                'location': json_response["features"][0]["place_name"],
-                'coordinates': json_response["features"][0]["center"],
-                'url': place[1]
-            }
+            updated_places.append(place_object)
+        elif place != user_trips[int(request.args["index"])]:
+            url = "https://api.mapbox.com/geocoding/v5/mapbox.places/{}.json?access_token=pk.eyJ1IjoiamVzc2ljYWxpYW5nIiwiYSI6ImNrY2I3N25wazFpOGEzMHF0dHY3aHNkOWUifQ.ItSK1BDpYydbUVyDPvdj6A".format(urllib.parse.quote_plus(place['location']))
+            response = requests.get(url)
+            json_response = response.json()
+
+            if not json_response["features"]:
+                place_object = {
+                    'location': 'ERROR: Location was invalid or not found.',
+                    'coordinates': 'invalid',
+                    'url': place['url']
+                }
+            else:
+                place_object = {
+                    'location': json_response["features"][0]["place_name"],
+                    'coordinates': json_response["features"][0]["center"],
+                    'url': place['url']
+                }
 
             updated_places.append(place_object)
         else:
@@ -142,7 +183,6 @@ def edit_trip():
 
     updated_trip['places'] = updated_places
 
-    user_trips = users.find_one({ "username" : request.args["username"] })["trips"] # current list of ALL trips
     user_trips[int(request.args["index"])] = updated_trip
 
     users.update_one(
